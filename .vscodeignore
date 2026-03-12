@@ -3,4 +3,6 @@
 CLAUDE.md
 .vscodeignore
 node_modules/**
+*.map
 npm-debug.log
+tt-*.vsix
