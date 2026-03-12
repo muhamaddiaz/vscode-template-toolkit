@@ -46,7 +46,7 @@
 	},
 	"if": {
 		"prefix": "if",
-		"body": "[% IF ${1:expr} %]\n   ${3:block...}\n[% END %]\n",
+		"body": "[% IF ${1:expr} %]\n   ${2:block...}\n[% END %]\n",
 		"description": "IF"
 	},
 	"ins": {

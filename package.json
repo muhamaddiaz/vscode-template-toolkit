@@ -13,7 +13,7 @@
     },
     "license": "MIT",
     "categories": [
-        "Languages",
+        "Programming Languages",
         "Snippets"
     ],
     "keywords": [
@@ -58,19 +58,41 @@
             {
                 "language": "tt",
                 "scopeName": "text.html.tt3",
-                "path": "./syntaxes/HTML+TT3.tmLanguage"
+                "path": "./syntaxes/HTML+TT3.tmLanguage",
+                "embeddedLanguages": {
+                    "text.html.basic": "html",
+                    "source.css": "css",
+                    "source.js": "javascript"
+                }
             },
             {
                 "language": "tt",
                 "scopeName": "text.html.tt2",
-                "path": "./syntaxes/HTML+TT2.tmLanguage"
+                "path": "./syntaxes/HTML+TT2.tmLanguage",
+                "embeddedLanguages": {
+                    "text.html.basic": "html",
+                    "source.css": "css",
+                    "source.js": "javascript"
+                }
             }
         ],
         "snippets": [
             {
                 "language": "tt",
                 "path": "./snippets/snippets.json"
+            },
+            {
+                "language": "html",
+                "path": "./snippets/snippets.json"
             }
-        ]
+        ],
+        "configurationDefaults": {
+            "emmet.includeLanguages": {
+                "tt": "html"
+            },
+            "[tt]": {
+                "editor.defaultFormatter": "vscode.html-language-features"
+            }
+        }
     }
 }
