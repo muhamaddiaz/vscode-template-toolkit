@@ -3,6 +3,7 @@
 
 const vscode = require('vscode');
 const beautify = require('js-beautify');
+const { BootstrapCompletionProvider, BootstrapHoverProvider } = require('./bootstrap');
 
 const TT_OPEN_KW  = new Set(['IF','UNLESS','FOREACH','FOR','WHILE','SWITCH','TRY','BLOCK','WRAPPER','FILTER','MACRO']);
 const TT_MID_KW   = new Set(['ELSE','ELSIF','CASE','CATCH','FINAL']);
@@ -151,6 +152,22 @@ function activate(context) {
                 return [vscode.TextEdit.replace(expanded, formatText(selected, document))];
             },
         })
+    );
+
+    // Bootstrap IntelliSense - Completion Provider
+    const bootstrapCompletionProvider = new BootstrapCompletionProvider();
+    context.subscriptions.push(
+        vscode.languages.registerCompletionItemProvider(
+            selector,
+            bootstrapCompletionProvider,
+            '"', "'", ' ', '-'
+        )
+    );
+
+    // Bootstrap IntelliSense - Hover Provider
+    const bootstrapHoverProvider = new BootstrapHoverProvider();
+    context.subscriptions.push(
+        vscode.languages.registerHoverProvider(selector, bootstrapHoverProvider)
     );
 }
 
