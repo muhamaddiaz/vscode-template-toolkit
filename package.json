@@ -1,7 +1,7 @@
 {
     "name": "tt",
     "displayName": "Template Toolkit",
-    "description": "VS Code support for Perl Template Toolkit syntax",
+    "description": "VS Code support for Perl Template Toolkit + Formatter syntax",
     "version": "0.1.0",
     "publisher": "muhamaddiaz",
     "repository": {
