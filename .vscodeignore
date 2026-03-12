@@ -1,2 +1,6 @@
 .vscode/*
 .gitignore
+CLAUDE.md
+.vscodeignore
+node_modules/**
+npm-debug.log

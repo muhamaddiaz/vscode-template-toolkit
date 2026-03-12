@@ -8,9 +8,13 @@
         "type": "git",
         "url": "https://github.com/samosad/vscode-template-toolkit"
     },
+    "main": "./extension.js",
     "engines": {
         "vscode": "^1.5.0"
     },
+    "activationEvents": [
+        "onLanguage:tt"
+    ],
     "license": "MIT",
     "categories": [
         "Programming Languages",
@@ -91,8 +95,12 @@
                 "tt": "html"
             },
             "[tt]": {
-                "editor.defaultFormatter": "vscode.html-language-features"
+                "editor.formatOnSave": true,
+                "editor.formatOnPaste": true
             }
         }
+    },
+    "dependencies": {
+        "js-beautify": "^1.15.4"
     }
 }
