@@ -7,6 +7,7 @@ const {
     createDocumentRangeFormattingEditProvider,
 } = require('./formatter');
 const { BootstrapCompletionProvider, BootstrapHoverProvider } = require('./providers/bootstrap5-provider');
+const { registerCommentToggle } = require('./providers/comment-toggle-provider');
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -45,6 +46,9 @@ function activate(context) {
     context.subscriptions.push(
         vscode.languages.registerHoverProvider(selector, bootstrapHoverProvider)
     );
+
+    // Context-aware comment toggle
+    registerCommentToggle(context);
 }
 
 function deactivate() {}

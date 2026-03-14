@@ -34,6 +34,15 @@ Converted from [TextMate Template Toolkit Bundle](https://github.com/textmate/pe
 
 ## Release Notes
 
+### 0.1.2
+- **Context-aware comment toggle** (`Cmd+/` / `Ctrl+/`) — automatically uses the correct comment style html, tt, js & css 
+- Fixed block comment indentation — HTML comments now preserve leading whitespace
+- Added space padding inside block comments: `<!-- content -->`
+
+### 0.1.1
+- **Bootstrap 5 IntelliSense** — class name completions and hover documentation inside `class="..."` attributes
+- **TT data structure formatter** — formats Perl-style hashes and arrays (`{ key => value }`, `[ 'item' ]`)
+
 ### 0.1.0
 - **Auto-format** on save and on paste for `.tt` files
 - **Format Document** (`Shift+Alt+F`) powered by js-beautify HTML formatter with TT-aware block indentation

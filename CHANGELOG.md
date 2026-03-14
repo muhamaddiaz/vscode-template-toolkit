@@ -3,6 +3,13 @@ All notable changes to the "tt3" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.1.2
+- **Context-aware comment toggle** (`Cmd+/` / `Ctrl+/`) — automatically uses the correct comment style html, tt, js & css 
+
+## 0.1.1
+- **Bootstrap 5 IntelliSense** — class name completions and hover documentation inside `class="..."` attributes
+- **TT data structure formatter** — formats Perl-style hashes and arrays (`{ key => value }`, `[ 'item' ]`)
+
 ## 0.1.0
 - **Auto-format** on save and on paste for `.tt` files
 - **Format Document** (`Shift+Alt+F`) powered by js-beautify HTML formatter with TT-aware block indentation
