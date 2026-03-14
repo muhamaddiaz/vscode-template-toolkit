@@ -1,5 +1,4 @@
-// Bootstrap 5 IntelliSense Support for Template Toolkit
-const vscode = require('vscode');
+// Bootstrap 5 class data for IntelliSense
 
 // Common Bootstrap 5 utility classes organized by category
 const BOOTSTRAP_CLASSES = {
@@ -304,7 +303,166 @@ const BOOTSTRAP_COMPONENTS = {
     ],
 };
 
-// Flatten all classes into a single array
+// Class descriptions for hover documentation
+const BOOTSTRAP_CLASS_DESCRIPTIONS = {
+    // Layout
+    'container': 'Container with responsive max-width',
+    'container-fluid': 'Full-width container',
+    'row': 'Horizontal row for columns',
+    'col': 'Flexible column',
+    // Display
+    'd-none': 'Hide element',
+    'd-block': 'Display as block',
+    'd-flex': 'Display as flexbox',
+    'd-inline': 'Display as inline',
+    'd-inline-block': 'Display as inline-block',
+    'd-grid': 'Display as grid',
+    // Flex utilities
+    'justify-content-start': 'Justify content to start',
+    'justify-content-center': 'Justify content to center',
+    'justify-content-end': 'Justify content to end',
+    'justify-content-between': 'Justify content with space between',
+    'justify-content-around': 'Justify content with space around',
+    'align-items-start': 'Align items to start',
+    'align-items-center': 'Align items to center',
+    'align-items-end': 'Align items to end',
+    'flex-wrap': 'Allow flex items to wrap',
+    'flex-nowrap': 'Prevent flex items from wrapping',
+    'flex-column': 'Set flex direction to column',
+    'flex-row': 'Set flex direction to row',
+    // Spacing
+    'm-0': 'Margin 0',
+    'm-1': 'Margin 0.25rem',
+    'm-2': 'Margin 0.5rem',
+    'm-3': 'Margin 1rem',
+    'm-4': 'Margin 1.5rem',
+    'm-5': 'Margin 3rem',
+    'p-0': 'Padding 0',
+    'p-1': 'Padding 0.25rem',
+    'p-2': 'Padding 0.5rem',
+    'p-3': 'Padding 1rem',
+    'p-4': 'Padding 1.5rem',
+    'p-5': 'Padding 3rem',
+    'mx-auto': 'Horizontal margin auto (center block)',
+    // Sizing
+    'w-100': 'Width 100%',
+    'h-100': 'Height 100%',
+    'w-50': 'Width 50%',
+    'w-25': 'Width 25%',
+    'w-75': 'Width 75%',
+    // Colors
+    'text-primary': 'Primary text color',
+    'text-secondary': 'Secondary text color',
+    'text-success': 'Success text color (green)',
+    'text-danger': 'Danger text color (red)',
+    'text-warning': 'Warning text color (yellow)',
+    'text-info': 'Info text color (cyan)',
+    'bg-primary': 'Primary background color',
+    'bg-secondary': 'Secondary background color',
+    'bg-success': 'Success background color',
+    'bg-danger': 'Danger background color',
+    'bg-light': 'Light background color',
+    'bg-dark': 'Dark background color',
+    'bg-white': 'White background',
+    // Typography
+    'h1': 'Heading 1 style',
+    'h2': 'Heading 2 style',
+    'h3': 'Heading 3 style',
+    'display-1': 'Display heading 1 (largest)',
+    'display-2': 'Display heading 2',
+    'display-3': 'Display heading 3',
+    'display-4': 'Display heading 4',
+    'lead': 'Lead paragraph style',
+    'text-center': 'Center-aligned text',
+    'text-start': 'Left-aligned text (LTR)',
+    'text-end': 'Right-aligned text (LTR)',
+    'fw-bold': 'Bold font weight',
+    'fw-normal': 'Normal font weight',
+    'fst-italic': 'Italic font style',
+    'text-uppercase': 'Uppercase text',
+    'text-capitalize': 'Capitalized text',
+    // Borders
+    'border': 'Add border to all sides',
+    'border-0': 'Remove border',
+    'rounded': 'Rounded corners',
+    'rounded-circle': 'Circular/fully rounded',
+    'rounded-pill': 'Pill-shaped rounded corners',
+    // Shadows
+    'shadow': 'Box shadow',
+    'shadow-sm': 'Small box shadow',
+    'shadow-lg': 'Large box shadow',
+    'shadow-none': 'No shadow',
+    // Position
+    'position-relative': 'Relative positioning',
+    'position-absolute': 'Absolute positioning',
+    'position-fixed': 'Fixed positioning',
+    'position-sticky': 'Sticky positioning',
+    // Components
+    'btn': 'Base button class',
+    'btn-primary': 'Primary button style',
+    'btn-secondary': 'Secondary button style',
+    'btn-success': 'Success button style',
+    'btn-danger': 'Danger button style',
+    'btn-lg': 'Large button',
+    'btn-sm': 'Small button',
+    'btn-block': 'Full-width button',
+    'card': 'Card container',
+    'card-body': 'Card body',
+    'card-header': 'Card header',
+    'card-footer': 'Card footer',
+    'card-title': 'Card title',
+    'alert': 'Alert container',
+    'alert-primary': 'Primary alert',
+    'alert-success': 'Success alert',
+    'alert-danger': 'Danger alert',
+    'alert-warning': 'Warning alert',
+    'badge': 'Badge component',
+    'modal': 'Modal container',
+    'modal-dialog': 'Modal dialog',
+    'modal-content': 'Modal content',
+    'navbar': 'Navbar container',
+    'navbar-expand-lg': 'Expand navbar at lg breakpoint',
+    'nav': 'Navigation base class',
+    'nav-tabs': 'Tab navigation',
+    'nav-pills': 'Pill navigation',
+    'dropdown': 'Dropdown container',
+    'dropdown-menu': 'Dropdown menu',
+    'dropdown-toggle': 'Dropdown toggle button',
+    'dropdown-item': 'Dropdown item',
+    'list-group': 'List group container',
+    'list-group-item': 'List group item',
+    'table': 'Table base class',
+    'table-striped': 'Striped table rows',
+    'table-bordered': 'Bordered table',
+    'table-hover': 'Hover effect on rows',
+    'form-control': 'Form input base class',
+    'form-select': 'Select input base class',
+    'form-check': 'Checkbox/radio wrapper',
+    'input-group': 'Input group container',
+    'input-group-text': 'Input group addon text',
+    'spinner-border': 'Border spinner/loader',
+    'spinner-grow': 'Growing spinner/loader',
+    'toast': 'Toast notification',
+    'accordion': 'Accordion container',
+    'collapse': 'Collapsible content',
+    'tooltip': 'Tooltip component',
+    'popover': 'Popover component',
+    'offcanvas': 'Offcanvas sidebar',
+    'placeholder': 'Placeholder element',
+    'carousel': 'Carousel/slider container',
+    'pagination': 'Pagination container',
+    'breadcrumb': 'Breadcrumb navigation',
+    'progress': 'Progress bar container',
+    'progress-bar': 'Progress bar',
+    'spinner-border-sm': 'Small border spinner',
+    'visually-hidden': 'Visually hidden (accessible)',
+    'vr': 'Vertical rule/divider',
+};
+
+/**
+ * Flatten all classes into a single sorted array
+ * @returns {string[]}
+ */
 function getAllBootstrapClasses() {
     const allClasses = new Set();
 
@@ -319,229 +477,19 @@ function getAllBootstrapClasses() {
     return Array.from(allClasses).sort();
 }
 
-// Get description for a class
+/**
+ * Get description for a Bootstrap class
+ * @param {string} className
+ * @returns {string}
+ */
 function getClassDescription(className) {
-    const descriptions = {
-        // Layout
-        'container': 'Container with responsive max-width',
-        'container-fluid': 'Full-width container',
-        'row': 'Horizontal row for columns',
-        'col': 'Flexible column',
-        // Display
-        'd-none': 'Hide element',
-        'd-block': 'Display as block',
-        'd-flex': 'Display as flexbox',
-        'd-inline': 'Display as inline',
-        'd-inline-block': 'Display as inline-block',
-        'd-grid': 'Display as grid',
-        // Flex utilities
-        'justify-content-start': 'Justify content to start',
-        'justify-content-center': 'Justify content to center',
-        'justify-content-end': 'Justify content to end',
-        'justify-content-between': 'Justify content with space between',
-        'justify-content-around': 'Justify content with space around',
-        'align-items-start': 'Align items to start',
-        'align-items-center': 'Align items to center',
-        'align-items-end': 'Align items to end',
-        'flex-wrap': 'Allow flex items to wrap',
-        'flex-nowrap': 'Prevent flex items from wrapping',
-        'flex-column': 'Set flex direction to column',
-        'flex-row': 'Set flex direction to row',
-        // Spacing
-        'm-0': 'Margin 0',
-        'm-1': 'Margin 0.25rem',
-        'm-2': 'Margin 0.5rem',
-        'm-3': 'Margin 1rem',
-        'm-4': 'Margin 1.5rem',
-        'm-5': 'Margin 3rem',
-        'p-0': 'Padding 0',
-        'p-1': 'Padding 0.25rem',
-        'p-2': 'Padding 0.5rem',
-        'p-3': 'Padding 1rem',
-        'p-4': 'Padding 1.5rem',
-        'p-5': 'Padding 3rem',
-        'mx-auto': 'Horizontal margin auto (center block)',
-        // Sizing
-        'w-100': 'Width 100%',
-        'h-100': 'Height 100%',
-        'w-50': 'Width 50%',
-        'w-25': 'Width 25%',
-        'w-75': 'Width 75%',
-        // Colors
-        'text-primary': 'Primary text color',
-        'text-secondary': 'Secondary text color',
-        'text-success': 'Success text color (green)',
-        'text-danger': 'Danger text color (red)',
-        'text-warning': 'Warning text color (yellow)',
-        'text-info': 'Info text color (cyan)',
-        'bg-primary': 'Primary background color',
-        'bg-secondary': 'Secondary background color',
-        'bg-success': 'Success background color',
-        'bg-danger': 'Danger background color',
-        'bg-light': 'Light background color',
-        'bg-dark': 'Dark background color',
-        'bg-white': 'White background',
-        // Typography
-        'h1': 'Heading 1 style',
-        'h2': 'Heading 2 style',
-        'h3': 'Heading 3 style',
-        'display-1': 'Display heading 1 (largest)',
-        'display-2': 'Display heading 2',
-        'display-3': 'Display heading 3',
-        'display-4': 'Display heading 4',
-        'lead': 'Lead paragraph style',
-        'text-center': 'Center-aligned text',
-        'text-start': 'Left-aligned text (LTR)',
-        'text-end': 'Right-aligned text (LTR)',
-        'fw-bold': 'Bold font weight',
-        'fw-normal': 'Normal font weight',
-        'fst-italic': 'Italic font style',
-        'text-uppercase': 'Uppercase text',
-        'text-capitalize': 'Capitalized text',
-        // Borders
-        'border': 'Add border to all sides',
-        'border-0': 'Remove border',
-        'rounded': 'Rounded corners',
-        'rounded-circle': 'Circular/fully rounded',
-        'rounded-pill': 'Pill-shaped rounded corners',
-        // Shadows
-        'shadow': 'Box shadow',
-        'shadow-sm': 'Small box shadow',
-        'shadow-lg': 'Large box shadow',
-        'shadow-none': 'No shadow',
-        // Position
-        'position-relative': 'Relative positioning',
-        'position-absolute': 'Absolute positioning',
-        'position-fixed': 'Fixed positioning',
-        'position-sticky': 'Sticky positioning',
-        // Components
-        'btn': 'Base button class',
-        'btn-primary': 'Primary button style',
-        'btn-secondary': 'Secondary button style',
-        'btn-success': 'Success button style',
-        'btn-danger': 'Danger button style',
-        'btn-lg': 'Large button',
-        'btn-sm': 'Small button',
-        'btn-block': 'Full-width button',
-        'card': 'Card container',
-        'card-body': 'Card body',
-        'card-header': 'Card header',
-        'card-footer': 'Card footer',
-        'card-title': 'Card title',
-        'alert': 'Alert container',
-        'alert-primary': 'Primary alert',
-        'alert-success': 'Success alert',
-        'alert-danger': 'Danger alert',
-        'alert-warning': 'Warning alert',
-        'badge': 'Badge component',
-        'modal': 'Modal container',
-        'modal-dialog': 'Modal dialog',
-        'modal-content': 'Modal content',
-        'navbar': 'Navbar container',
-        'navbar-expand-lg': 'Expand navbar at lg breakpoint',
-        'nav': 'Navigation base class',
-        'nav-tabs': 'Tab navigation',
-        'nav-pills': 'Pill navigation',
-        'dropdown': 'Dropdown container',
-        'dropdown-menu': 'Dropdown menu',
-        'dropdown-toggle': 'Dropdown toggle button',
-        'dropdown-item': 'Dropdown item',
-        'list-group': 'List group container',
-        'list-group-item': 'List group item',
-        'table': 'Table base class',
-        'table-striped': 'Striped table rows',
-        'table-bordered': 'Bordered table',
-        'table-hover': 'Hover effect on rows',
-        'form-control': 'Form input base class',
-        'form-select': 'Select input base class',
-        'form-check': 'Checkbox/radio wrapper',
-        'input-group': 'Input group container',
-        'input-group-text': 'Input group addon text',
-        'spinner-border': 'Border spinner/loader',
-        'spinner-grow': 'Growing spinner/loader',
-        'toast': 'Toast notification',
-        'accordion': 'Accordion container',
-        'collapse': 'Collapsible content',
-        'tooltip': 'Tooltip component',
-        'popover': 'Popover component',
-        'offcanvas': 'Offcanvas sidebar',
-        'placeholder': 'Placeholder element',
-        'carousel': 'Carousel/slider container',
-        'pagination': 'Pagination container',
-        'breadcrumb': 'Breadcrumb navigation',
-        'progress': 'Progress bar container',
-        'progress-bar': 'Progress bar',
-        'spinner-border-sm': 'Small border spinner',
-        'visually-hidden': 'Visually hidden (accessible)',
-        'vr': 'Vertical rule/divider',
-    };
-
-    return descriptions[className] || `Bootstrap class: ${className}`;
-}
-
-// Create completion items from Bootstrap classes
-function createBootstrapCompletionItems() {
-    const allClasses = getAllBootstrapClasses();
-    return allClasses.map(className => {
-        const item = new vscode.CompletionItem(className, vscode.CompletionItemKind.Value);
-        item.detail = 'Bootstrap 5';
-        item.documentation = new vscode.MarkdownString(getClassDescription(className));
-        item.insertText = className;
-        return item;
-    });
-}
-
-// Bootstrap IntelliSense Provider
-class BootstrapCompletionProvider {
-    constructor() {
-        this.completionItems = createBootstrapCompletionItems();
-    }
-
-    provideCompletionItems(document, position) {
-        const lineText = document.lineAt(position).text.substring(0, position.character);
-
-        // Check if we're in a class attribute context
-        const classAttrMatch = lineText.match(/class\s*=\s*["']([^"']*)$/);
-        const classValueMatch = lineText.match(/class\s*=\s*["'][^"']*\s+$/);
-
-        if (classAttrMatch || classValueMatch) {
-            // We're inside a class attribute, provide Bootstrap class completions
-            return this.completionItems;
-        }
-
-        // Check for TT class variable
-        const ttClassMatch = lineText.match(/class\s*=>?\s*["']([^"']*)$/);
-        if (ttClassMatch) {
-            return this.completionItems;
-        }
-
-        return [];
-    }
-}
-
-// Bootstrap Hover Provider
-class BootstrapHoverProvider {
-    provideHover(document, position) {
-        const range = document.getWordRangeAtPosition(position, /[a-zA-Z0-9_-]+/);
-        if (!range) return;
-
-        const word = document.getText(range);
-        const allClasses = getAllBootstrapClasses();
-
-        if (allClasses.includes(word)) {
-            const description = getClassDescription(word);
-            const contents = new vscode.MarkdownString();
-            contents.appendCodeblock(word, 'html');
-            contents.appendMarkdown(`**Bootstrap 5**\n\n${description}`);
-            contents.isTrusted = true;
-            return new vscode.Hover(contents, range);
-        }
-    }
+    return BOOTSTRAP_CLASS_DESCRIPTIONS[className] || `Bootstrap class: ${className}`;
 }
 
 module.exports = {
-    BootstrapCompletionProvider,
-    BootstrapHoverProvider,
+    BOOTSTRAP_CLASSES,
+    BOOTSTRAP_COMPONENTS,
+    BOOTSTRAP_CLASS_DESCRIPTIONS,
     getAllBootstrapClasses,
     getClassDescription,
 };

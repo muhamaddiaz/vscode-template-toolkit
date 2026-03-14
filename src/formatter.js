@@ -1,15 +1,17 @@
-// @ts-check
-'use strict';
-
+// Template Toolkit Document Formatter
 const vscode = require('vscode');
 const beautify = require('js-beautify');
-const { BootstrapCompletionProvider, BootstrapHoverProvider } = require('./bootstrap');
 
+// TT directive categories for indentation tracking
 const TT_OPEN_KW  = new Set(['IF','UNLESS','FOREACH','FOR','WHILE','SWITCH','TRY','BLOCK','WRAPPER','FILTER','MACRO']);
 const TT_MID_KW   = new Set(['ELSE','ELSIF','CASE','CATCH','FINAL']);
 const TT_CLOSE_KW = new Set(['END']);
 
-/** @param {vscode.TextDocument} doc */
+/**
+ * Get the indentation string based on editor configuration
+ * @param {vscode.TextDocument} doc
+ * @returns {string}
+ */
 function getIndentString(doc) {
     const cfg = vscode.workspace.getConfiguration('editor', doc.uri);
     const size  = /** @type {number}  */ (cfg.get('tabSize', 4));
@@ -18,13 +20,12 @@ function getIndentString(doc) {
 }
 
 /**
+ * Protect TT tags by replacing them with placeholders
  * @param {string} text
  * @returns {{ substituted: string, stored: string[] }}
  */
 function protectTT(text) {
-    /**
-     * @type {string[]}
-     */
+    /** @type {string[]} */
     const stored = [];
     const substituted = text.replace(/\[%[-+~=]?[\s\S]*?[-+~]?%\]/g, match => {
         const id = stored.length;
@@ -35,16 +36,20 @@ function protectTT(text) {
 }
 
 /**
+ * Restore TT tags from placeholders
  * @param {string} text
  * @param {string[]} stored
+ * @returns {string}
  */
 function restoreTT(text, stored) {
     return text.replace(/\[__TT(\d+)__\]/g, (_, id) => stored[+id]);
 }
 
 /**
+ * Apply TT-specific indentation on top of HTML indentation
  * @param {string} text
  * @param {string} indentStr
+ * @returns {string}
  */
 function applyTTIndentation(text, indentStr) {
     const lines  = text.split('\n');
@@ -91,6 +96,7 @@ function applyTTIndentation(text, indentStr) {
  * Full 4-stage formatting pipeline for .tt files.
  * @param {string} text
  * @param {vscode.TextDocument} doc
+ * @returns {string}
  */
 function formatText(text, doc) {
     const indentStr  = getIndentString(doc);
@@ -121,55 +127,48 @@ function formatText(text, doc) {
     return applyTTIndentation(restored, indentStr);
 }
 
-// ── Extension entry points ───────────────────────────────────────────────────
-
-/** @param {vscode.ExtensionContext} context */
-function activate(context) {
-    const selector = [{ language: 'tt' }];
-
-    // Format entire document
-    context.subscriptions.push(
-        vscode.languages.registerDocumentFormattingEditProvider(selector, {
-            provideDocumentFormattingEdits(document) {
-                const fullRange = new vscode.Range(
-                    document.positionAt(0),
-                    document.positionAt(document.getText().length)
-                );
-                return [vscode.TextEdit.replace(fullRange, formatText(document.getText(), document))];
-            },
-        })
-    );
-
-    // Format selection (expands to full lines for correct indentation)
-    context.subscriptions.push(
-        vscode.languages.registerDocumentRangeFormattingEditProvider(selector, {
-            provideDocumentRangeFormattingEdits(document, range) {
-                const expanded = new vscode.Range(
-                    new vscode.Position(range.start.line, 0),
-                    new vscode.Position(range.end.line, document.lineAt(range.end.line).text.length)
-                );
-                const selected = document.getText(expanded);
-                return [vscode.TextEdit.replace(expanded, formatText(selected, document))];
-            },
-        })
-    );
-
-    // Bootstrap IntelliSense - Completion Provider
-    const bootstrapCompletionProvider = new BootstrapCompletionProvider();
-    context.subscriptions.push(
-        vscode.languages.registerCompletionItemProvider(
-            selector,
-            bootstrapCompletionProvider,
-            '"', "'", ' ', '-'
-        )
-    );
-
-    // Bootstrap IntelliSense - Hover Provider
-    const bootstrapHoverProvider = new BootstrapHoverProvider();
-    context.subscriptions.push(
-        vscode.languages.registerHoverProvider(selector, bootstrapHoverProvider)
-    );
+/**
+ * Create a document formatting edit provider
+ * @returns {vscode.DocumentFormattingEditProvider}
+ */
+function createDocumentFormattingEditProvider() {
+    return {
+        provideDocumentFormattingEdits(document) {
+            const fullRange = new vscode.Range(
+                document.positionAt(0),
+                document.positionAt(document.getText().length)
+            );
+            return [vscode.TextEdit.replace(fullRange, formatText(document.getText(), document))];
+        },
+    };
 }
 
-function deactivate() {}
-module.exports = { activate, deactivate };
+/**
+ * Create a document range formatting edit provider
+ * @returns {vscode.DocumentRangeFormattingEditProvider}
+ */
+function createDocumentRangeFormattingEditProvider() {
+    return {
+        provideDocumentRangeFormattingEdits(document, range) {
+            const expanded = new vscode.Range(
+                new vscode.Position(range.start.line, 0),
+                new vscode.Position(range.end.line, document.lineAt(range.end.line).text.length)
+            );
+            const selected = document.getText(expanded);
+            return [vscode.TextEdit.replace(expanded, formatText(selected, document))];
+        },
+    };
+}
+
+module.exports = {
+    formatText,
+    getIndentString,
+    protectTT,
+    restoreTT,
+    applyTTIndentation,
+    createDocumentFormattingEditProvider,
+    createDocumentRangeFormattingEditProvider,
+    TT_OPEN_KW,
+    TT_MID_KW,
+    TT_CLOSE_KW,
+};

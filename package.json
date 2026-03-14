@@ -2,7 +2,7 @@
     "name": "tt",
     "displayName": "Template Toolkit",
     "description": "VS Code support for Perl Template Toolkit + Formatter syntax",
-    "version": "0.1.0",
+    "version": "0.1.2",
     "publisher": "muhamaddiaz",
     "repository": {
         "type": "git",
@@ -10,11 +10,9 @@
     },
     "main": "./out/extension.js",
     "engines": {
-        "vscode": "^1.74.0"
+        "vscode": "^1.75.0"
     },
-    "activationEvents": [
-        "onLanguage:tt"
-    ],
+    "activationEvents": [],
     "license": "MIT",
     "categories": [
         "Programming Languages",
@@ -101,7 +99,7 @@
         }
     },
     "scripts": {
-        "build": "esbuild extension.js --bundle --platform=node --outfile=out/extension.js --external:vscode",
+        "build": "esbuild src/extension.js --bundle --platform=node --outfile=out/extension.js --external:vscode",
         "package": "npm run build && vsce package"
     },
     "dependencies": {
