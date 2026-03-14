@@ -1,6 +1,7 @@
 // Template Toolkit Document Formatter
 const vscode = require('vscode');
 const beautify = require('js-beautify');
+const { formatTTDataStructure, isTTDataStructure } = require('./tt-data-formatter');
 
 // TT directive categories for indentation tracking
 const TT_OPEN_KW  = new Set(['IF','UNLESS','FOREACH','FOR','WHILE','SWITCH','TRY','BLOCK','WRAPPER','FILTER','MACRO']);
@@ -93,16 +94,53 @@ function applyTTIndentation(text, indentStr) {
 }
 
 /**
- * Full 4-stage formatting pipeline for .tt files.
+ * Check if content is pure TT data structure (no HTML)
+ * @param {string} text
+ * @returns {boolean}
+ */
+function isPureTTData(text) {
+    // Check if entire document is a TT data structure
+    const trimmed = text.trim();
+
+    // Must start with [% and end with %]
+    if (!trimmed.startsWith('[%') || !trimmed.endsWith('%]')) {
+        return false;
+    }
+
+    // Use the detection from tt-data-formatter
+    return isTTDataStructure(text);
+}
+
+/**
+ * Full formatting pipeline for .tt files.
+ * Automatically detects TT data structures vs HTML+TT content.
  * @param {string} text
  * @param {vscode.TextDocument} doc
  * @returns {string}
  */
 function formatText(text, doc) {
-    const indentStr  = getIndentString(doc);
-    const cfg        = vscode.workspace.getConfiguration('editor', doc.uri);
-    const tabSize    = /** @type {number}  */ (cfg.get('tabSize', 4));
-    const useSpaces  = /** @type {boolean} */ (cfg.get('insertSpaces', true));
+    const indentStr = getIndentString(doc);
+
+    // Check if this is a pure TT data structure (not HTML)
+    if (isPureTTData(text)) {
+        return formatTTDataStructure(text, indentStr);
+    }
+
+    // Otherwise, treat as HTML+TT and use the HTML formatter pipeline
+    return formatHTMLPlusTT(text, doc, indentStr);
+}
+
+/**
+ * Format HTML+TT content (4-stage pipeline)
+ * @param {string} text
+ * @param {vscode.TextDocument} doc
+ * @param {string} indentStr
+ * @returns {string}
+ */
+function formatHTMLPlusTT(text, doc, indentStr) {
+    const cfg = vscode.workspace.getConfiguration('editor', doc.uri);
+    const tabSize = /** @type {number} */ (cfg.get('tabSize', 4));
+    const useSpaces = /** @type {boolean} */ (cfg.get('insertSpaces', true));
 
     // Stage 1 — protect TT tags from beautify
     const { substituted, stored } = protectTT(text);
@@ -162,6 +200,8 @@ function createDocumentRangeFormattingEditProvider() {
 
 module.exports = {
     formatText,
+    formatHTMLPlusTT,
+    isPureTTData,
     getIndentString,
     protectTT,
     restoreTT,
