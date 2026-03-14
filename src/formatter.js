@@ -1,172 +1,324 @@
-// Template Toolkit Document Formatter
+/**
+ * Template Toolkit Document Formatter
+ *
+ * Handles formatting for .tt files with two modes:
+ * 1. TT Data Structures: Perl-style hashes/arrays (delegates to tt-data-formatter)
+ * 2. HTML+TT: HTML with embedded Template Toolkit directives
+ *
+ * @module formatter
+ */
+
 const vscode = require('vscode');
 const beautify = require('js-beautify');
 const { formatTTDataStructure, isTTDataStructure } = require('./tt-data-formatter');
 
-// TT directive categories for indentation tracking
-const TT_OPEN_KW  = new Set(['IF','UNLESS','FOREACH','FOR','WHILE','SWITCH','TRY','BLOCK','WRAPPER','FILTER','MACRO']);
-const TT_MID_KW   = new Set(['ELSE','ELSIF','CASE','CATCH','FINAL']);
-const TT_CLOSE_KW = new Set(['END']);
+// =============================================================================
+// Constants - TT Directive Categories
+// =============================================================================
 
 /**
- * Get the indentation string based on editor configuration
- * @param {vscode.TextDocument} doc
- * @returns {string}
+ * Directives that open a block (increase indentation after)
  */
-function getIndentString(doc) {
+const BLOCK_OPEN_DIRECTIVES = new Set([
+    'IF', 'UNLESS', 'FOREACH', 'FOR', 'WHILE', 'SWITCH', 'TRY',
+    'BLOCK', 'WRAPPER', 'FILTER', 'MACRO'
+]);
+
+/**
+ * Directives in the middle of a block (deindent before, indent after)
+ */
+const BLOCK_MID_DIRECTIVES = new Set([
+    'ELSE', 'ELSIF', 'CASE', 'CATCH', 'FINAL'
+]);
+
+/**
+ * Directives that close a block (deindent before)
+ */
+const BLOCK_CLOSE_DIRECTIVES = new Set(['END']);
+
+/**
+ * TT tag pattern for detection
+ */
+const TT_TAG_PATTERN = /\[%[-+~=]?[\s\S]*?[-+~]?%\]/g;
+
+/**
+ * TT directive pattern for indentation tracking
+ */
+const TT_DIRECTIVE_PATTERN = /\[%[-+~=]?\s*([A-Z]+)/gi;
+
+// =============================================================================
+// Editor Configuration
+// =============================================================================
+
+/**
+ * Get indentation settings from VS Code editor configuration
+ *
+ * @param {vscode.TextDocument} doc - The document being formatted
+ * @returns {{ indentSize: number, useSpaces: boolean, indentStr: string }}
+ */
+function getEditorConfig(doc) {
     const cfg = vscode.workspace.getConfiguration('editor', doc.uri);
-    const size  = /** @type {number}  */ (cfg.get('tabSize', 4));
-    const spaces = /** @type {boolean} */ (cfg.get('insertSpaces', true));
-    return spaces ? ' '.repeat(size) : '\t';
+    const indentSize = /** @type {number} */ (cfg.get('tabSize', 4));
+    const useSpaces = /** @type {boolean} */ (cfg.get('insertSpaces', true));
+    const indentStr = useSpaces ? ' '.repeat(indentSize) : '\t';
+
+    return { indentSize, useSpaces, indentStr };
 }
 
 /**
+ * Get just the indentation string
+ *
+ * @param {vscode.TextDocument} doc - The document being formatted
+ * @returns {string} - Indentation string (spaces or tab)
+ */
+function getIndentString(doc) {
+    return getEditorConfig(doc).indentStr;
+}
+
+// =============================================================================
+// TT Tag Protection (for HTML formatting)
+// =============================================================================
+
+/**
+ * Placeholder format for protected TT tags
+ */
+const PLACEHOLDER_PREFIX = '[__TT';
+const PLACEHOLDER_SUFFIX = '__]';
+
+/**
  * Protect TT tags by replacing them with placeholders
- * @param {string} text
+ *
+ * This prevents js-beautify from corrupting TT syntax during HTML formatting.
+ *
+ * @param {string} text - Document text
  * @returns {{ substituted: string, stored: string[] }}
  */
-function protectTT(text) {
-    /** @type {string[]} */
+function protectTTTags(text) {
     const stored = [];
-    const substituted = text.replace(/\[%[-+~=]?[\s\S]*?[-+~]?%\]/g, match => {
+    const substituted = text.replace(TT_TAG_PATTERN, (match) => {
         const id = stored.length;
         stored.push(match);
-        return `[__TT${id}__]`;
+        return `${PLACEHOLDER_PREFIX}${id}${PLACEHOLDER_SUFFIX}`;
     });
     return { substituted, stored };
 }
 
 /**
  * Restore TT tags from placeholders
- * @param {string} text
- * @param {string[]} stored
- * @returns {string}
+ *
+ * @param {string} text - Text with placeholders
+ * @param {string[]} stored - Original TT tags
+ * @returns {string} - Text with restored TT tags
  */
-function restoreTT(text, stored) {
-    return text.replace(/\[__TT(\d+)__\]/g, (_, id) => stored[+id]);
+function restoreTTTags(text, stored) {
+    const placeholderPattern = new RegExp(
+        escapeRegex(PLACEHOLDER_PREFIX) + '(\\d+)' + escapeRegex(PLACEHOLDER_SUFFIX),
+        'g'
+    );
+    return text.replace(placeholderPattern, (_, id) => stored[+id]);
+}
+
+/**
+ * Escape special regex characters
+ */
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Keep old function names for backwards compatibility
+const protectTT = protectTTTags;
+const restoreTT = restoreTTTags;
+
+// =============================================================================
+// TT Block Indentation
+// =============================================================================
+
+/**
+ * Count TT directive types in a line
+ *
+ * @param {string} line - Line to analyze
+ * @returns {{ openCount: number, midCount: number, closeCount: number }}
+ */
+function countDirectives(line) {
+    let openCount = 0;
+    let midCount = 0;
+    let closeCount = 0;
+
+    let match;
+    const regex = new RegExp(TT_DIRECTIVE_PATTERN.source, 'gi');
+
+    while ((match = regex.exec(line)) !== null) {
+        const directive = match[1].toUpperCase();
+
+        if (BLOCK_OPEN_DIRECTIVES.has(directive)) {
+            openCount++;
+        }
+        if (BLOCK_MID_DIRECTIVES.has(directive)) {
+            midCount++;
+        }
+        if (BLOCK_CLOSE_DIRECTIVES.has(directive)) {
+            closeCount++;
+        }
+    }
+
+    return { openCount, midCount, closeCount };
 }
 
 /**
  * Apply TT-specific indentation on top of HTML indentation
- * @param {string} text
- * @param {string} indentStr
- * @returns {string}
+ *
+ * This handles the additional indentation for TT block directives.
+ *
+ * @param {string} text - HTML-formatted text with TT tags
+ * @param {string} indentStr - Indentation string
+ * @returns {string} - Text with proper TT indentation
  */
-function applyTTIndentation(text, indentStr) {
-    const lines  = text.split('\n');
+function applyTTBlockIndentation(text, indentStr) {
+    const lines = text.split('\n');
     const result = [];
-    let ttLevel  = 0;
+    let indentLevel = 0;
 
     for (const line of lines) {
         const trimmed = line.trim();
 
+        // Empty lines pass through
         if (!trimmed) {
             result.push('');
             continue;
         }
 
-        // Leading whitespace from js-beautify (HTML structural indent)
-        const baseIndent = /** @type {string} */ (line.match(/^(\s*)/)?.[1] ?? '');
+        // Get the HTML indentation from js-beautify
+        const htmlIndent = line.match(/^(\s*)/)?.[1] ?? '';
 
-        // Count directive types present on this line
-        let preDeindent = 0;
-        let postIndent  = 0;
+        // Count directives that affect indentation
+        const { openCount, midCount, closeCount } = countDirectives(trimmed);
 
-        const tagRe = /\[%[-+~=]?\s*([A-Z]+)/gi;
-        let m;
-        while ((m = tagRe.exec(trimmed)) !== null) {
-            const kw = m[1].toUpperCase();
-            if (TT_CLOSE_KW.has(kw) || TT_MID_KW.has(kw)) preDeindent++;
-            if (TT_OPEN_KW.has(kw)  || TT_MID_KW.has(kw)) postIndent++;
-        }
+        // Calculate indent adjustment:
+        // - MID and CLOSE directives deindent BEFORE the line
+        // - OPEN and MID directives indent AFTER the line
+        const deindentBefore = midCount + closeCount;
+        const indentAfter = openCount + midCount;
 
-        // Deindent BEFORE printing (END / ELSE / ELSIF / CASE)
-        ttLevel = Math.max(0, ttLevel - preDeindent);
+        // Apply deindent before printing
+        const currentIndent = Math.max(0, indentLevel - deindentBefore);
 
-        // Emit the line at baseIndent + TT extra
-        result.push(baseIndent + indentStr.repeat(ttLevel) + trimmed);
+        // Print line with combined indentation
+        result.push(htmlIndent + indentStr.repeat(currentIndent) + trimmed);
 
-        // Indent AFTER printing (IF / FOREACH / BLOCK / … / ELSE / …)
-        ttLevel += postIndent;
+        // Update indent level for next line
+        indentLevel = currentIndent + indentAfter;
     }
 
     return result.join('\n');
 }
 
+// Keep old function name for backwards compatibility
+const applyTTIndentation = applyTTBlockIndentation;
+
+// =============================================================================
+// Content Detection
+// =============================================================================
+
 /**
- * Check if content is pure TT data structure (no HTML)
- * @param {string} text
+ * Check if document is a pure TT data structure (no HTML)
+ *
+ * @param {string} text - Document text
  * @returns {boolean}
  */
 function isPureTTData(text) {
-    // Check if entire document is a TT data structure
     const trimmed = text.trim();
 
-    // Must start with [% and end with %]
+    // Must be wrapped in TT tags
     if (!trimmed.startsWith('[%') || !trimmed.endsWith('%]')) {
         return false;
     }
 
-    // Use the detection from tt-data-formatter
     return isTTDataStructure(text);
 }
 
+// =============================================================================
+// HTML+TT Formatter
+// =============================================================================
+
 /**
- * Full formatting pipeline for .tt files.
- * Automatically detects TT data structures vs HTML+TT content.
- * @param {string} text
- * @param {vscode.TextDocument} doc
- * @returns {string}
+ * Default options for js-beautify HTML formatting
+ */
+function getBeautifyOptions(indentSize, useSpaces) {
+    return {
+        indent_size: indentSize,
+        indent_char: useSpaces ? ' ' : '\t',
+        max_preserve_newlines: 1,
+        preserve_newlines: true,
+        wrap_line_length: 0,
+        end_with_newline: true,
+        extra_liners: [],
+        wrap_attributes: 'auto',
+        unformatted: [],
+    };
+}
+
+/**
+ * Format HTML+TT content using the 4-stage pipeline:
+ *
+ * 1. Protect - Replace TT tags with placeholders
+ * 2. Format - Apply js-beautify HTML formatting
+ * 3. Restore - Replace placeholders with original TT tags
+ * 4. Indent - Apply additional TT block indentation
+ *
+ * @param {string} text - Document text
+ * @param {vscode.TextDocument} doc - Document being formatted
+ * @param {string} indentStr - Indentation string
+ * @returns {string} - Formatted text
+ */
+function formatHTMLPlusTT(text, doc, indentStr) {
+    const { indentSize, useSpaces } = getEditorConfig(doc);
+
+    // Stage 1: Protect TT tags from beautify
+    const { substituted, stored } = protectTTTags(text);
+
+    // Stage 2: HTML formatting
+    const htmlFormatted = beautify.html(substituted, getBeautifyOptions(indentSize, useSpaces));
+
+    // Stage 3: Restore TT tags
+    const restored = restoreTTTags(htmlFormatted, stored);
+
+    // Stage 4: Apply TT block indentation
+    return applyTTBlockIndentation(restored, indentStr);
+}
+
+// =============================================================================
+// Main Entry Point
+// =============================================================================
+
+/**
+ * Format TT document text
+ *
+ * Automatically detects content type and routes to appropriate formatter:
+ * - TT data structures → tt-data-formatter
+ * - HTML+TT → HTML formatter pipeline
+ *
+ * @param {string} text - Document text
+ * @param {vscode.TextDocument} doc - Document being formatted
+ * @returns {string} - Formatted text
  */
 function formatText(text, doc) {
     const indentStr = getIndentString(doc);
 
-    // Check if this is a pure TT data structure (not HTML)
+    // Route to appropriate formatter based on content type
     if (isPureTTData(text)) {
         return formatTTDataStructure(text, indentStr);
     }
 
-    // Otherwise, treat as HTML+TT and use the HTML formatter pipeline
     return formatHTMLPlusTT(text, doc, indentStr);
 }
 
-/**
- * Format HTML+TT content (4-stage pipeline)
- * @param {string} text
- * @param {vscode.TextDocument} doc
- * @param {string} indentStr
- * @returns {string}
- */
-function formatHTMLPlusTT(text, doc, indentStr) {
-    const cfg = vscode.workspace.getConfiguration('editor', doc.uri);
-    const tabSize = /** @type {number} */ (cfg.get('tabSize', 4));
-    const useSpaces = /** @type {boolean} */ (cfg.get('insertSpaces', true));
-
-    // Stage 1 — protect TT tags from beautify
-    const { substituted, stored } = protectTT(text);
-
-    // Stage 2 — HTML formatting (TT placeholders are treated as inert text)
-    const htmlFormatted = beautify.html(substituted, {
-        indent_size:            tabSize,
-        indent_char:            useSpaces ? ' ' : '\t',
-        max_preserve_newlines:  1,
-        preserve_newlines:      true,
-        wrap_line_length:       0,
-        end_with_newline:       true,
-        extra_liners:           [],
-        wrap_attributes:        'auto',
-        unformatted:            [],
-    });
-
-    // Stage 3 — restore TT tags
-    const restored = restoreTT(htmlFormatted, stored);
-
-    // Stage 4 — add TT block indentation on top of HTML indentation
-    return applyTTIndentation(restored, indentStr);
-}
+// =============================================================================
+// VS Code Provider Factories
+// =============================================================================
 
 /**
  * Create a document formatting edit provider
+ *
  * @returns {vscode.DocumentFormattingEditProvider}
  */
 function createDocumentFormattingEditProvider() {
@@ -176,39 +328,67 @@ function createDocumentFormattingEditProvider() {
                 document.positionAt(0),
                 document.positionAt(document.getText().length)
             );
-            return [vscode.TextEdit.replace(fullRange, formatText(document.getText(), document))];
+            return [
+                vscode.TextEdit.replace(fullRange, formatText(document.getText(), document))
+            ];
         },
     };
 }
 
 /**
  * Create a document range formatting edit provider
+ *
+ * Expands selection to full lines for correct indentation.
+ *
  * @returns {vscode.DocumentRangeFormattingEditProvider}
  */
 function createDocumentRangeFormattingEditProvider() {
     return {
         provideDocumentRangeFormattingEdits(document, range) {
-            const expanded = new vscode.Range(
+            // Expand to full lines
+            const expandedRange = new vscode.Range(
                 new vscode.Position(range.start.line, 0),
                 new vscode.Position(range.end.line, document.lineAt(range.end.line).text.length)
             );
-            const selected = document.getText(expanded);
-            return [vscode.TextEdit.replace(expanded, formatText(selected, document))];
+            const selectedText = document.getText(expandedRange);
+            return [
+                vscode.TextEdit.replace(expandedRange, formatText(selectedText, document))
+            ];
         },
     };
 }
 
+// =============================================================================
+// Exports
+// =============================================================================
+
 module.exports = {
+    // Main API
     formatText,
     formatHTMLPlusTT,
     isPureTTData,
+
+    // Configuration
     getIndentString,
+    getEditorConfig,
+
+    // TT Tag handling
     protectTT,
     restoreTT,
+    protectTTTags,
+    restoreTTTags,
+
+    // Indentation
     applyTTIndentation,
+    applyTTBlockIndentation,
+    countDirectives,
+
+    // Provider factories
     createDocumentFormattingEditProvider,
     createDocumentRangeFormattingEditProvider,
-    TT_OPEN_KW,
-    TT_MID_KW,
-    TT_CLOSE_KW,
+
+    // Constants (for testing)
+    BLOCK_OPEN_DIRECTIVES,
+    BLOCK_MID_DIRECTIVES,
+    BLOCK_CLOSE_DIRECTIVES,
 };
