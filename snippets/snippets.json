@@ -2,106 +2,106 @@
 	"block": {
 		"prefix": "block",
 		"body": "[% BLOCK ${1:name} %]\n   ${2:block...}\n[% END %]\n",
-		"description": "BLOCK"
+		"description": "BLOCK - Define a reusable template block. The block can be defined anywhere in the template and later called using PROCESS or INCLUDE. Blocks are not output where defined, only when invoked. Example: [% BLOCK header %]...[% END %] then [% PROCESS header %]"
 	},
 	"call": {
 		"prefix": "call",
 		"body": "[% CALL ${1:expr} %]\n",
-		"description": "CALL"
+		"description": "CALL - Evaluate an expression and discard the result. Useful for calling methods or functions for their side effects without outputting the return value. Example: [% CALL db.commit %] commits without printing the result"
 	},
 	"def": {
 		"prefix": "def",
 		"body": "[% DEFAULT ${1:var} = ${2:expr} %]\n",
-		"description": "DEFAULT"
+		"description": "DEFAULT - Set a variable value only if it is undefined. Unlike SET, this preserves existing values. Useful for providing fallback values. Example: [% DEFAULT title = 'Untitled' %] sets title only if not already defined"
 	},
 	"end": {
 		"prefix": "end",
 		"body": "[% END %]\n",
-		"description": "END"
+		"description": "END - Close a block directive. Required to terminate IF, FOREACH, WHILE, SWITCH, TRY, BLOCK, WRAPPER, FILTER, and MACRO blocks. Every opening block directive must have a matching END"
 	},
 	"for": {
 		"prefix": "for",
 		"body": "[% FOREACH ${1:item} IN ${2:list...} %]\n   ${3:block...}\n[% END %]\n",
-		"description": "FOREACH"
+		"description": "FOREACH - Iterate over a list or hash. The loop variable ($item) contains each element. Use loop.first, loop.last, loop.size, loop.index, loop.count for metadata. Also supports FOREACH ... IN hash (iterates keys). Alias: FOR"
 	},
 	"get": {
 		"prefix": "get",
 		"body": "[% GET ${1:expr} %]\n",
-		"description": "GET"
+		"description": "GET - Retrieve and output the value of a variable or expression. This is the default behavior, so [% variable %] is equivalent to [% GET variable %]. Useful for explicit clarity or complex expressions"
 	},
 	"ifelse": {
 		"prefix": "ifelse",
 		"body": "[% IF ${1:expr} -%]\n   ${2:block...}\n[% ELSE -%]\n   ${3:block...}\n[% END %]\n",
-		"description": "IF ELSE"
+		"description": "IF/ELSE - Conditional block with alternative. Evaluates expression truthiness. Supports && (and), || (or), ! (not). The -%] chomps whitespace. Example: [% IF user.logged_in %]...[% ELSE %]...[% END %]"
 	},
 	"ifs": {
 		"prefix": "ifs",
 		"body": "[% IF ${1:expr} -%]\n   ${2:block...}\n[% ELSIF ${3:expr} -%]\n   ${4:block...}\n[% ELSE -%]\n   ${5:block...}\n[% END %]\n",
-		"description": "IF ELSIF ELSE"
+		"description": "IF/ELSIF/ELSE - Multi-branch conditional. Evaluates conditions in order; first true branch executes. Use for multiple mutually exclusive conditions. Example: [% IF score >= 90 %]A[% ELSIF score >= 80 %]B[% ELSE %]C[% END %]"
 	},
 	"ifelsif": {
 		"prefix": "ifelsif",
 		"body": "[% IF ${1:expr} -%]\n   ${2:block...}\n[% ELSIF ${3:expr} -%]\n   ${4:block...}\n[% END %]\n",
-		"description": "IF ELSIF"
+		"description": "IF/ELSIF - Two-branch conditional without fallback. Use when you have specific conditions but no default case. Example: [% IF admin %]Admin Panel[% ELSIF moderator %]Mod Panel[% END %]"
 	},
 	"if": {
 		"prefix": "if",
 		"body": "[% IF ${1:expr} %]\n   ${2:block...}\n[% END %]\n",
-		"description": "IF"
+		"description": "IF - Simple conditional block. Executes content only if expression is true. Supports comparison operators (==, !=, <, >, <=, >=) and logical operators (&&, ||, !). Example: [% IF items.size > 0 %]...[% END %]"
 	},
 	"ins": {
 		"prefix": "ins",
 		"body": "[% INSERT ${1:template} %]\n",
-		"description": "INSERT"
+		"description": "INSERT - Include a template file without processing. The file contents are inserted literally, no TT directives are evaluated. Faster than INCLUDE/PROCESS. Use for static content like copyright notices, disclaimers"
 	},
 	"inca": {
 		"prefix": "inca",
 		"body": "[% INCLUDE ${1:template} ${2:args...} %]\n",
-		"description": "INCLUDE args"
+		"description": "INCLUDE with args - Process a template with local variable assignments. Variables passed are local to the included template; changes don't affect caller. Example: [% INCLUDE header title='Page Title' theme='dark' %]"
 	},
 	"inc": {
 		"prefix": "inc",
 		"body": "[% INCLUDE ${1:template} %]\n",
-		"description": "INCLUDE"
+		"description": "INCLUDE - Process and include another template file. Creates a local scope; variable changes in the included template don't affect the caller. Template path is relative to INCLUDE_PATH config. Use for reusable components"
 	},
 	"macro": {
 		"prefix": "macro",
 		"body": "[% MACRO ${1:name}\n         ${2:directive}\n%]\n",
-		"description": "MACRO"
+		"description": "MACRO - Define a reusable macro that can be called like a directive. Macros can accept arguments and contain complex logic. Example: [% MACRO header(title) BLOCK %]<h1>[% title %]</h1>[% END %] then use [% header('Welcome') %]"
 	},
 	"proca": {
 		"prefix": "proca",
 		"body": "[% PROCESS ${1:template} ${2:args...} %]\n",
-		"description": "PROCESS args"
+		"description": "PROCESS with args - Process a template with variable assignments. Unlike INCLUDE, PROCESS runs in the current scope and is faster. Variable changes persist after processing. Example: [% PROCESS component data=item %]"
 	},
 	"proc": {
 		"prefix": "proc",
 		"body": "[% PROCESS ${1:template} %]\n",
-		"description": "PROCESS"
+		"description": "PROCESS - Include and process another template in the current scope. Unlike INCLUDE, variable changes in the processed template affect the caller. More efficient than INCLUDE as it doesn't create a new scope. Use when sharing state is needed"
 	},
 	"set": {
 		"prefix": "set",
 		"body": "[% SET ${1:var} = ${2:expr} %]\n",
-		"description": "SET"
+		"description": "SET - Assign a value to a variable. Can set multiple variables: [% SET x = 1, y = 2 %]. Use [% var = value %] as shorthand. Variables persist in the current scope. Use DEFAULT instead to avoid overwriting existing values"
 	},
 	"switch": {
 		"prefix": "switch",
 		"body": "[% SWITCH ${1:expr} -%]\n[%   CASE ${2:value1} -%]\n          ${3:block...}\n[%   CASE ${4:value2} -%]\n          ${5:block...}\n[%   CASE # default case -%]\n          ${6:block...}\n[% END -%]\n",
-		"description": "SWITCH"
+		"description": "SWITCH/CASE - Multi-way branch based on a value. More efficient than multiple IF/ELSIF for comparing one value against many options. CASE without a value is the default. Example: [% SWITCH status %][% CASE 'active' %]...[% CASE %]Unknown[% END %]"
 	},
 	"use": {
 		"prefix": "use",
 		"body": "[% USE ${1:plugin}(${2:args}) %]\n",
-		"description": "USE"
+		"description": "USE - Load and instantiate a Template Toolkit plugin. Plugins provide extended functionality like date formatting, database access, file operations. Example: [% USE Date %] then [% Date.format %]. Standard plugins: Date, Table, URL, HTML, DBI, XML"
 	},
 	"wrapa": {
 		"prefix": "wrapa",
 		"body": "[% WRAPPER ${1:template} ${2:args...} %]\n   ${3:content...}\n[% END %]\n",
-		"description": "WRAPPER args"
+		"description": "WRAPPER with args - Wrap content with a template, passing arguments. The wrapper receives content via [% content %]. Variables passed become available in the wrapper. Example: [% WRAPPER layout title='Page' %]Main content here[% END %]"
 	},
 	"wrap": {
 		"prefix": "wrap",
 		"body": "[% WRAPPER ${1:template} %]\n   ${3:content...}\n[% END %]\n",
-		"description": "WRAPPER"
+		"description": "WRAPPER - Wrap content with another template. The wrapped content is passed to the wrapper as the 'content' variable. Use for layouts, frames, decorative borders. Example: WRAPPER layout.tt contains [% content %] placeholder where wrapped content appears"
 	}
 }
